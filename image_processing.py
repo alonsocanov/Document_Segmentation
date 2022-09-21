@@ -72,7 +72,7 @@ def createImg(foreground: np.ndarray, background: np.ndarray):
         foreground, matrix, (int(w_back), int(h_back)))
 
     gray = cv2.cvtColor(new_img, cv2.COLOR_BGR2GRAY)
-    ret, mask = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+    ret, mask = cv2.threshold(gray, 10, 25, cv2.THRESH_BINARY)
 
     # dst = cv2.addWeighted(background, 1, new_img, .5, 0)
 
