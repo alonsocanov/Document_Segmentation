@@ -1,5 +1,6 @@
 import glob
 import os
+import random
 
 
 def filesInDir(path: str, ext: str = '') -> list:
@@ -17,3 +18,7 @@ def getParentDir():
 
 def joinPath(*args):
     return os.path.join(*args)
+
+
+def getRandomRange(start: int, end: int, num_values: int):
+    return [random.randint(start, end) for _ in range(num_values)]

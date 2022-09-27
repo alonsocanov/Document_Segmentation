@@ -54,6 +54,10 @@ def disort(dim: tuple):
     return np.float32(pts)
 
 
+def saveImg(path: str, img: np.ndarray):
+    cv2.imwrite(path, img)
+
+
 def createImg(foreground: np.ndarray, background: np.ndarray):
 
     h_back, w_back = background.shape[:2]
@@ -73,17 +77,17 @@ def createImg(foreground: np.ndarray, background: np.ndarray):
     # prespective matrix
     matrix = cv2.getPerspectiveTransform(pts_src, pts_dst)
     # classified image
-    img = cv2.warpPerspective(
+    class_img = cv2.warpPerspective(
         fore_seg, matrix, (int(w_back), int(h_back)))
     # policy image
     policy_img = cv2.warpPerspective(
         foreground, matrix, (int(w_back), int(h_back)))
     # set images in 8 bit
     background = np.uint8(background)
-    img = np.uint8(img)
+    class_img = np.uint8(class_img)
     policy_img = np.uint8(policy_img)
     # subtract background
-    new_img = cv2.subtract(background, img)
-    new_img = cv2.add(new_img, policy_img)
+    dataset_img = cv2.subtract(background, class_img)
+    dataset_img = cv2.add(dataset_img, policy_img)
 
-    return new_img
+    return dataset_img, class_img
