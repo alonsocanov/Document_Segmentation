@@ -65,26 +65,25 @@ def createImg(foreground: np.ndarray, background: np.ndarray):
     # create a black background for segmentation
     bkg_seg = np.zeros((h_back, w_back, 3), dtype=np.float32)
     # crete document interest for segmentation
-    fore_seg = np.ones((h_fore, w_fore, 3), dtype=np.float32)
-
+    fore_seg = np.ones((h_fore, w_fore, 3), dtype=np.float32) * 255
+    # rsc points
     pts_src = np.float32([[0, 0], [w_fore, 0], [0, h_fore], [w_fore, h_fore]])
-
+    # destination points
     pts_dst = disort((w_fore, h_fore))
-    # result = np.where(warp.sum(axis=-1,keepdims=True)!=0, warp, original)
+    # prespective matrix
     matrix = cv2.getPerspectiveTransform(pts_src, pts_dst)
-
-    new_img = cv2.warpPerspective(
+    # classified image
+    img = cv2.warpPerspective(
         fore_seg, matrix, (int(w_back), int(h_back)))
-
-    # print(np.uint8(background), np.uint8(new_img))
-
-    # new_img = cv2.add(np.uint8(background), np.uint8(new_img))
-
-    # gray = cv2.cvtColor(new_img, cv2.COLOR_BGR2GRAY)
-    # ret, mask = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
-
-    # dst = cv2.addWeighted(background, 1, new_img, .5, 0)
-    # print(dst)
-    # new_h, new_w = new_img.shape[:2]
+    # policy image
+    policy_img = cv2.warpPerspective(
+        foreground, matrix, (int(w_back), int(h_back)))
+    # set images in 8 bit
+    background = np.uint8(background)
+    img = np.uint8(img)
+    policy_img = np.uint8(policy_img)
+    # subtract background
+    new_img = cv2.subtract(background, img)
+    new_img = cv2.add(new_img, policy_img)
 
     return new_img
