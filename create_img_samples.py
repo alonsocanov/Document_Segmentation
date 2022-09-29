@@ -30,7 +30,7 @@ def main():
 
     num_bkgs = len(bkg_imgs)
     num_policies = len(policy_imgs)
-    num_samples = 15
+    num_samples = 30
     rand_bkgs = utils.getRandomRange(0, num_bkgs - 1, num_samples)
     rand_policies = utils.getRandomRange(0, num_policies - 1, num_samples)
 
