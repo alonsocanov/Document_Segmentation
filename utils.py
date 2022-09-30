@@ -1,6 +1,7 @@
 import glob
 import os
 import random
+from log import Log
 
 
 def filesInDir(path: str, ext: str = '') -> list:

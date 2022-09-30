@@ -8,6 +8,9 @@ from torchvision import transforms
 import torch
 import copy
 import os
+from log import Log
+import numpy as np
+# import tqdm
 
 
 def imageTransform():
@@ -126,6 +129,10 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
 
 def main():
     root = utils.getParentDir()
+    log_dir = utils.joinPath(root, 'log')
+    my_log = Log(log_dir)
+    my_log.config()
+
     transform = imageTransform()
 
     dataset = SegmentationDataset(
@@ -135,7 +142,15 @@ def main():
                                         batch_sampler=None, num_workers=0)
 
     deepLab = createDeepLabv3()
-    print(deepLab)
+    my_log.message('info', deepLab)
+
+    criterion = torch.nn.MSELoss()
+    my_log.message('info', criterion)
+    # optimizer = optim.SGD(deepLab.parameters(), lr=0.01, momentum=0.9)
+    num_epochs = 10
+    my_log.message('info', ['Number of epochs:', num_epochs])
+    lr = 0.0001
+    my_log.message('info', ['Learning Rate:', lr])
 
 
 if __name__ == '__main__':
