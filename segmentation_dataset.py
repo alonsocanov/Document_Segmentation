@@ -43,8 +43,8 @@ class SegmentationDataset(VisionDataset):
         self.mask_color_mode = mask_color_mode
 
         if not fraction:
-            self.img_names = sorted(glob.glob(img_path))
-            self.mask_names = sorted(glob.glob(mask_path))
+            self.img_names = sorted(glob.glob(img_path + '/*.jpg'))
+            self.mask_names = sorted(glob.glob(mask_path + '/*.jpg'))
         else:
             # training and test dataset
             pass
@@ -53,7 +53,6 @@ class SegmentationDataset(VisionDataset):
         return len(self.img_names)
 
     def __getitem__(self, index: int) -> Any:
-        super().__getitem__(index)
         image_path = self.img_names[index]
         mask_path = self.mask_names[index]
         with open(image_path, 'rb') as image_file, open(mask_path, 'rb') as mask_file:

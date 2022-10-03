@@ -10,6 +10,10 @@ import copy
 import os
 from log import Log
 import numpy as np
+import sys
+from sklearn.metrics import f1_score, roc_auc_score
+from tqdm import tqdm
+
 # import tqdm
 
 
@@ -55,17 +59,18 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
     # Use gpu if available
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
+    my_log.message('info', ['Using device:', device])
     # Initialize the log file for training and testing loss and metrics
     fieldnames = ['epoch', 'Train_loss', 'Test_loss'] + \
         [f'Train_{m}' for m in metrics.keys()] + \
         [f'Test_{m}' for m in metrics.keys()]
-    with open(os.path.join(bpath, 'log.csv'), 'w', newline='') as csvfile:
-        writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-        writer.writeheader()
+    my_log.message('info', ['Fildnames:', fieldnames])
 
     for epoch in range(1, num_epochs + 1):
-        print('Epoch {}/{}'.format(epoch, num_epochs))
-        print('-' * 10)
+        msg = ' '.join(['Epoch', str(epoch), '/', str(num_epochs)])
+        my_log.message('info', msg)
+        msg = '-'*10
+        my_log.message('info', msg)
         # Each epoch has a training and validation phase
         # Initialize batch summary
         batchsummary = {a: [0] for a in fieldnames}
@@ -105,17 +110,12 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
             batchsummary['epoch'] = epoch
             epoch_loss = loss
             batchsummary[f'{phase}_loss'] = epoch_loss.item()
-            print('{} Loss: {:.4f}'.format(phase, loss))
+            my_log.message('info', batchsummary)
+            # print('{} Loss: {:.4f}'.format(phase, loss))
         for field in fieldnames[3:]:
             batchsummary[field] = np.mean(batchsummary[field])
-        print(batchsummary)
-        with open(os.path.join(bpath, 'log.csv'), 'a', newline='') as csvfile:
-            writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-            writer.writerow(batchsummary)
-            # deep copy the model
-            if phase == 'Test' and loss < best_loss:
-                best_loss = loss
-                best_model_wts = copy.deepcopy(model.state_dict())
+        # print(batchsummary)
+        my_log.message('info', batchsummary)
 
     time_elapsed = time.time() - since
     print('Training complete in {:.0f}m {:.0f}s'.format(
@@ -128,30 +128,33 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
 
 
 def main():
-    root = utils.getParentDir()
-    log_dir = utils.joinPath(root, 'log')
-    my_log = Log(log_dir)
-    my_log.config()
 
     transform = imageTransform()
-
     dataset = SegmentationDataset(
         root, 'dataset/images', 'dataset/masks', transform, 'rgb', 'gray')
-
     train = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False,
                                         batch_sampler=None, num_workers=0)
-
+    # get model
     deepLab = createDeepLabv3()
-    my_log.message('info', deepLab)
-
-    criterion = torch.nn.MSELoss()
+    # criteria Mean Square Loss
+    criterion = torch.nn.MSELoss(reduction='mean')
     my_log.message('info', criterion)
-    # optimizer = optim.SGD(deepLab.parameters(), lr=0.01, momentum=0.9)
+    optimizer = torch.optim.Adam(deepLab.parameters(), lr=0.01)
     num_epochs = 10
     my_log.message('info', ['Number of epochs:', num_epochs])
     lr = 0.0001
     my_log.message('info', ['Learning Rate:', lr])
+    save_path = utils.joinPath(root, 'model/doc_segmentation.pth')
+    metrics = {'f1_score': f1_score, 'auroc': roc_auc_score}
+    dataloaders = {'Train': train}
+
+    train_model(deepLab, criterion, dataloaders, optimizer,
+                metrics, save_path, num_epochs)
 
 
+root = utils.getParentDir()
+log_dir = utils.joinPath(root, 'log')
+my_log = Log(log_dir)
+my_log.config()
 if __name__ == '__main__':
     main()
