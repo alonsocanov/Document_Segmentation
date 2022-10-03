@@ -15,8 +15,9 @@ class SegmentationDataset(VisionDataset):
     The transforms passed would be applied to both the Images and Masks.
     '''
 
-    def __init__(self, root, img_dir, mask_dir, transforms=None, img_color_mode: str = None, mask_color_mode: str = None, fraction: float = None) -> None:
+    def __init__(self, root, img_dir, mask_dir, transforms=None, transform_mask=None, img_color_mode: str = None, mask_color_mode: str = None, fraction: float = None) -> None:
         super().__init__(root, transforms)
+        self.mask_transform = transform_mask
         # check images directories
         if not os.path.isdir(root):
             msg = 'The root directory: ' + root + ' does not exist'
@@ -76,4 +77,6 @@ class SegmentationDataset(VisionDataset):
 
             if self.transforms:
                 sample['image'] = self.transforms(sample['image'])
-                sample['mask'] = self.transforms(sample['mask'])
+                sample['mask'] = self.mask_transform(sample['mask'])
+
+        return sample

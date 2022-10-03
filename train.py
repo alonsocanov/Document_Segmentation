@@ -13,8 +13,7 @@ import numpy as np
 import sys
 from sklearn.metrics import f1_score, roc_auc_score
 from tqdm import tqdm
-
-# import tqdm
+import matplotlib.pyplot as plt
 
 
 def imageTransform():
@@ -32,6 +31,19 @@ def imageTransform():
         transforms.CenterCrop(img_crop),
         transforms.ToTensor(),
         transforms.Normalize(mean=mean, std=std)])
+    return transform
+
+
+def maskTransform():
+    # image resize
+    img_resize = 224
+    # image crop for neural network (for better training the model)
+    img_crop = 224
+    # image transforms
+    transform = transforms.Compose([
+        transforms.Resize(img_resize),
+        transforms.CenterCrop(img_crop),
+        transforms.ToTensor()])
     return transform
 
 
@@ -94,6 +106,7 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
                     loss = criterion(outputs['out'], masks)
                     y_pred = outputs['out'].data.cpu().numpy().ravel()
                     y_true = masks.data.cpu().numpy().ravel()
+
                     for name, metric in metrics.items():
                         if name == 'f1_score':
                             # Use a classification threshold of 0.1
@@ -111,7 +124,20 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
             epoch_loss = loss
             batchsummary[f'{phase}_loss'] = epoch_loss.item()
             my_log.message('info', batchsummary)
-            # print('{} Loss: {:.4f}'.format(phase, loss))
+            if bpath:
+
+                state = {
+                    'model': model,
+                    # 'classes': classes,
+                    # 'transform': transform,
+                    'epoch': epoch,
+                    # 'batch_size': batch_size,
+                    'device': device
+                }
+
+                torch.save(state, bpath)
+            msg = [phase, ': Loss:', loss]
+            my_log.message('info', msg)
         for field in fieldnames[3:]:
             batchsummary[field] = np.mean(batchsummary[field])
         # print(batchsummary)
@@ -129,11 +155,12 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
 
 def main():
 
-    transform = imageTransform()
+    img_transform = imageTransform()
+    mask_transform = maskTransform()
     dataset = SegmentationDataset(
-        root, 'dataset/images', 'dataset/masks', transform, 'rgb', 'gray')
-    train = torch.utils.data.DataLoader(dataset, batch_size=1, shuffle=False,
-                                        batch_sampler=None, num_workers=0)
+        root, 'dataset/images', 'dataset/masks', img_transform, mask_transform, 'rgb', 'gray')
+    train = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False,
+                                        batch_sampler=None, num_workers=0, drop_last=True)
     # get model
     deepLab = createDeepLabv3()
     # criteria Mean Square Loss
@@ -146,7 +173,10 @@ def main():
     my_log.message('info', ['Learning Rate:', lr])
     save_path = utils.joinPath(root, 'model/doc_segmentation.pth')
     metrics = {'f1_score': f1_score, 'auroc': roc_auc_score}
-    dataloaders = {'Train': train}
+    dataloaders = {'Train': train, 'Test': train}
+    img = dataset[0]['image']
+    # plt.imshow(np.transpose(img, (1, 2, 0)), interpolation='nearest')
+    # plt.show()
 
     train_model(deepLab, criterion, dataloaders, optimizer,
                 metrics, save_path, num_epochs)
