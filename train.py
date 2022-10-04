@@ -154,15 +154,28 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
 
 
 def main():
-
     img_transform = imageTransform()
     mask_transform = maskTransform()
     dataset = SegmentationDataset(
         root, 'dataset/images', 'dataset/masks', img_transform, mask_transform, 'rgb', 'gray')
     train = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False,
                                         batch_sampler=None, num_workers=0, drop_last=True)
-    # get model
-    deepLab = createDeepLabv3()
+    # saved path
+    save_path = utils.joinPath(root, 'model/doc_segmentation.pth')
+    if utils.fileExists(save_path):
+        try:
+            msg = 'Loading pretrainded DeepLab model'
+            model_param = torch.load(save_path)
+            deepLab = model_param['model']
+        except:
+            # get model
+            msg = 'Loading DeepLab model'
+            deepLab = createDeepLabv3()
+    else:
+        # get model
+        msg = 'Loading DeepLab model'
+        deepLab = createDeepLabv3()
+    my_log.message('info', msg)
     # criteria Mean Square Loss
     criterion = torch.nn.MSELoss(reduction='mean')
     my_log.message('info', criterion)
@@ -171,7 +184,6 @@ def main():
     my_log.message('info', ['Number of epochs:', num_epochs])
     lr = 0.0001
     my_log.message('info', ['Learning Rate:', lr])
-    save_path = utils.joinPath(root, 'model/doc_segmentation.pth')
     metrics = {'f1_score': f1_score, 'auroc': roc_auc_score}
     dataloaders = {'Train': train, 'Test': train}
     img = dataset[0]['image']
@@ -186,5 +198,6 @@ root = utils.getParentDir()
 log_dir = utils.joinPath(root, 'log')
 my_log = Log(log_dir)
 my_log.config()
+
 if __name__ == '__main__':
     main()
