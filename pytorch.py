@@ -28,6 +28,18 @@ def imageTransform(normalize=True):
     return transform
 
 
+def predictTransform():
+    # meam for images
+    mean = [0.485, 0.456, 0.406]
+    # std for images
+    std = [0.229, 0.224, 0.225]
+
+    transform = transforms.Compose([
+        transforms.ToTensor(),
+        transforms.Normalize(mean=mean, std=std)])
+    return transform
+
+
 def predict(model_path, img_path, threshold=.7):
     model_param = torch.load(model_path)
     img = Image.open(img_path)
@@ -36,7 +48,7 @@ def predict(model_path, img_path, threshold=.7):
     model.eval()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model.to(device)
-    transform = imageTransform()
+    transform = predictTransform()
     img = transform(img)
     img = img.unsqueeze(0)
     img.to(device)

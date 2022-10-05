@@ -125,7 +125,6 @@ def main():
     dataset_dir = utils.joinPath(root, 'dataset')
 
     parser = argparse.ArgumentParser(description='Train model for DeepLab')
-    parser.add_argument('train', type=str, help='Select a model to train')
     parser.add_argument('--pretrained', type=int, default=1,
                         help='If a pretraind model exists use it')
     parser.add_argument('--save', type=bool,
