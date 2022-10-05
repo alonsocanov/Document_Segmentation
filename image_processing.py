@@ -6,7 +6,7 @@ def showImg(img: np.ndarray, show_time: int = 0):
     title = 'Image'
     cv2.namedWindow(title)
     cv2.moveWindow(title, 20, 20)
-    new_img = resize(img, ())
+    new_img = resize(img)
     cv2.imshow(title, new_img)
     cv2.waitKey(show_time)
     cv2.destroyWindow(title)
@@ -16,7 +16,7 @@ def readImg(path: str):
     return cv2.imread(path)
 
 
-def resize(img: np.ndarray, dim: tuple, factor: float = 1):
+def resize(img: np.ndarray, dim: tuple = (), factor: float = 1):
     h, w = img.shape[:2]
     if not dim:
         h, w = h * factor, w * factor
@@ -25,7 +25,6 @@ def resize(img: np.ndarray, dim: tuple, factor: float = 1):
             factor = (max_h / h)
         if w * factor > max_w:
             factor = (max_w / w)
-
         w, h = w * factor, h * factor
     else:
         w, h = dim
@@ -67,7 +66,7 @@ def createImg(foreground: np.ndarray, background: np.ndarray):
 
     # Clasification segmented image with class (0 - background, 255 - document)
     # create a black background for segmentation
-    bkg_seg = np.zeros((h_back, w_back, 3), dtype=np.float32)
+    # bkg_seg = np.zeros((h_back, w_back, 3), dtype=np.float32)
     # crete document interest for segmentation
     fore_seg = np.ones((h_fore, w_fore, 3), dtype=np.float32) * 255
     # rsc points
@@ -89,5 +88,9 @@ def createImg(foreground: np.ndarray, background: np.ndarray):
     # subtract background
     dataset_img = cv2.subtract(background, class_img)
     dataset_img = cv2.add(dataset_img, policy_img)
-
     return dataset_img, class_img
+
+
+def morphImage(img, mask, show_time):
+    if img.shape != mask.shape:
+        pass

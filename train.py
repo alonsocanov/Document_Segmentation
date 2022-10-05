@@ -4,47 +4,16 @@ import time
 import torch
 from segmentation_dataset import SegmentationDataset
 import utils
-from torchvision import transforms
 import torch
 import copy
-import os
 from log import Log
 import numpy as np
-import sys
 from sklearn.metrics import f1_score, roc_auc_score
 from tqdm import tqdm
 import matplotlib.pyplot as plt
-
-
-def imageTransform():
-    # meam for images
-    mean = [0.485, 0.456, 0.406]
-    # std for images
-    std = [0.229, 0.224, 0.225]
-    # image resize
-    img_resize = 224
-    # image crop for neural network (for better training the model)
-    img_crop = 224
-    # image transforms
-    transform = transforms.Compose([
-        transforms.Resize(img_resize),
-        transforms.CenterCrop(img_crop),
-        transforms.ToTensor(),
-        transforms.Normalize(mean=mean, std=std)])
-    return transform
-
-
-def maskTransform():
-    # image resize
-    img_resize = 224
-    # image crop for neural network (for better training the model)
-    img_crop = 224
-    # image transforms
-    transform = transforms.Compose([
-        transforms.Resize(img_resize),
-        transforms.CenterCrop(img_crop),
-        transforms.ToTensor()])
-    return transform
+import argparse
+# my libraries
+import pytorch as py
 
 
 def createDeepLabv3(outputchannels=1):
@@ -65,7 +34,7 @@ def createDeepLabv3(outputchannels=1):
 
 def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
                 num_epochs):
-    since = time.time()
+    start = time.time()
     best_model_wts = copy.deepcopy(model.state_dict())
     best_loss = 1e10
     # Use gpu if available
@@ -76,7 +45,6 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
     fieldnames = ['epoch', 'Train_loss', 'Test_loss'] + \
         [f'Train_{m}' for m in metrics.keys()] + \
         [f'Test_{m}' for m in metrics.keys()]
-    my_log.message('info', ['Fildnames:', fieldnames])
 
     for epoch in range(1, num_epochs + 1):
         msg = ' '.join(['Epoch', str(epoch), '/', str(num_epochs)])
@@ -132,7 +100,6 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
                     # 'transform': transform,
                     'epoch': epoch,
                     # 'batch_size': batch_size,
-                    'device': device
                 }
 
                 torch.save(state, bpath)
@@ -143,25 +110,54 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
         # print(batchsummary)
         my_log.message('info', batchsummary)
 
-    time_elapsed = time.time() - since
+    time_elapsed = time.time() - start
     print('Training complete in {:.0f}m {:.0f}s'.format(
         time_elapsed // 60, time_elapsed % 60))
     print('Lowest Loss: {:4f}'.format(best_loss))
-
     # load best model weights
     model.load_state_dict(best_model_wts)
     return model
 
 
 def main():
-    img_transform = imageTransform()
-    mask_transform = maskTransform()
+    # saved path
+    save_path = utils.joinPath(root, 'model/doc_segmentation.pth')
+    dataset_dir = utils.joinPath(root, 'dataset')
+
+    parser = argparse.ArgumentParser(description='Train model for DeepLab')
+    parser.add_argument('train', type=str, help='Select a model to train')
+    parser.add_argument('--pretrained', type=int, default=1,
+                        help='If a pretraind model exists use it')
+    parser.add_argument('--save', type=bool,
+                        default=True, help='Save model')
+    parser.add_argument('--num-epochs', type=int, default=40,
+                        help='Set number of epochs')
+    parser.add_argument('--lr', type=float, default=0.001,
+                        help='Set learning rate')
+    parser.add_argument('--dataset-path', type=str, default=save_path,
+                        help='Path to save model with .pth extension')
+    parser.add_argument('--save-path', type=str, default=save_path,
+                        help='Path to save model with .pth extension')
+
+    args = parser.parse_args()
+
+    lr = args.lr
+    my_log.message('info', ['Learning Rate:', lr])
+    num_epochs = args.num_epochs
+    my_log.message('info', ['Number of epochs:', num_epochs])
+    dataset_dir = args.dataset_path
+    my_log.message('info', ['Dataset directory:', dataset_dir])
+
+    img_transform = py.imageTransform()
+    mask_transform = py.imageTransform(False)
+    msg = '------------------- Start training -------------------'
+    my_log.message('info', msg)
     dataset = SegmentationDataset(
         root, 'dataset/images', 'dataset/masks', img_transform, mask_transform, 'rgb', 'gray')
     train = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False,
                                         batch_sampler=None, num_workers=0, drop_last=True)
-    # saved path
-    save_path = utils.joinPath(root, 'model/doc_segmentation.pth')
+
+    save_path = args.save_path
     if utils.fileExists(save_path):
         try:
             msg = 'Loading pretrainded DeepLab model'
@@ -169,21 +165,18 @@ def main():
             deepLab = model_param['model']
         except:
             # get model
-            msg = 'Loading DeepLab model'
+            msg = 'Loading new DeepLab'
             deepLab = createDeepLabv3()
     else:
         # get model
-        msg = 'Loading DeepLab model'
+        msg = 'Loading new DeepLab'
         deepLab = createDeepLabv3()
     my_log.message('info', msg)
     # criteria Mean Square Loss
     criterion = torch.nn.MSELoss(reduction='mean')
     my_log.message('info', criterion)
-    optimizer = torch.optim.Adam(deepLab.parameters(), lr=0.01)
-    num_epochs = 10
-    my_log.message('info', ['Number of epochs:', num_epochs])
-    lr = 0.0001
-    my_log.message('info', ['Learning Rate:', lr])
+    optimizer = torch.optim.Adam(deepLab.parameters(), lr=lr)
+
     metrics = {'f1_score': f1_score, 'auroc': roc_auc_score}
     dataloaders = {'Train': train, 'Test': train}
     img = dataset[0]['image']
