@@ -1,4 +1,3 @@
-import matplotlib.pyplot as plt
 from torchvision import transforms
 import torch
 from PIL import Image
@@ -56,6 +55,6 @@ def predict(model_path, img_path, threshold=.7):
     mask = output['out'].squeeze()
     thresh = torch.nn.Threshold(threshold, 0)
     mask = thresh(mask)
-    mask[mask > 0] = 255
+    mask[mask > 0] = 1
     mask = mask.detach().numpy()
     return mask

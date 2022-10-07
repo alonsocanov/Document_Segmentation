@@ -2,13 +2,12 @@ import cv2
 import numpy as np
 
 
-def showImg(img: np.ndarray, show_time: int = 0):
-    title = 'Image'
+def showImg(img: np.ndarray, show_time: int = 0, title: str = 'Image'):
     cv2.namedWindow(title)
     cv2.moveWindow(title, 20, 20)
     new_img = resize(img)
     cv2.imshow(title, new_img)
-    cv2.waitKey(show_time)
+    cv2.waitKey(show_time * 1000)
     cv2.destroyWindow(title)
 
 
@@ -91,6 +90,14 @@ def createImg(foreground: np.ndarray, background: np.ndarray):
     return dataset_img, class_img
 
 
-def morphImage(img, mask, show_time):
-    if img.shape != mask.shape:
-        pass
+def morphImage(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
+    if len(img.shape) != 3:
+        print('Warning: Unable to morph image')
+        return img
+    mask[mask == 1] = .5
+    mask[mask == 0] = 1
+    morph = img.astype(np.float32)
+    morph[:, :, 0] = cv2.multiply(morph[:, :, 0], mask)
+    morph[:, :, 2] = cv2.multiply(morph[:, :, 2], mask)
+
+    return morph.astype(np.uint8)
