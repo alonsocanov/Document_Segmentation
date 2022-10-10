@@ -11,7 +11,7 @@ def main():
     policy_dir = utils.joinPath(path, 'policies')
     bkg_dir = utils.joinPath(path, 'backgrounds')
     save_dir = utils.joinPath(path, 'dataset')
-    classification_dir = utils.joinPath(save_dir, 'classification')
+    classification_dir = utils.joinPath(save_dir, 'masks')
     imgs_dir = utils.joinPath(save_dir, 'images')
 
     # get argumennts

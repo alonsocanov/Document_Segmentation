@@ -57,8 +57,12 @@ def saveImg(path: str, img: np.ndarray):
 
 
 def createImg(foreground: np.ndarray, background: np.ndarray):
+    640
+    320
 
     h_back, w_back = background.shape[:2]
+    h_back, w_back = 640, 320
+    background = resize(background, (w_back, h_back))
     h_fore, w_fore = foreground.shape[:2]
     w_fore, h_fore = setToBkgDim((w_back, h_back), (w_fore, h_fore))
     foreground = resize(foreground, (w_fore, h_fore))
