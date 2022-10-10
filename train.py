@@ -10,7 +10,6 @@ from log import Log
 import numpy as np
 from sklearn.metrics import f1_score, roc_auc_score
 from tqdm import tqdm
-import matplotlib.pyplot as plt
 import argparse
 # my libraries
 import pytorch as py
@@ -153,7 +152,7 @@ def main():
     my_log.message('info', msg)
     dataset = SegmentationDataset(
         root, 'dataset/images', 'dataset/masks', img_transform, mask_transform, 'rgb', 'gray')
-    train = torch.utils.data.DataLoader(dataset, batch_size=2, shuffle=False,
+    train = torch.utils.data.DataLoader(dataset, batch_size=4, shuffle=False,
                                         batch_sampler=None, num_workers=0, drop_last=True)
 
     save_path = args.save_path
@@ -179,8 +178,6 @@ def main():
     metrics = {'f1_score': f1_score, 'auroc': roc_auc_score}
     dataloaders = {'Train': train, 'Test': train}
     img = dataset[0]['image']
-    # plt.imshow(np.transpose(img, (1, 2, 0)), interpolation='nearest')
-    # plt.show()
 
     train_model(deepLab, criterion, dataloaders, optimizer,
                 metrics, save_path, num_epochs)

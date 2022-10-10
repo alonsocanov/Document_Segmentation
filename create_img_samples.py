@@ -1,5 +1,4 @@
 import argparse
-import sys
 
 # my libraries
 import utils
@@ -30,7 +29,7 @@ def main():
 
     num_bkgs = len(bkg_imgs)
     num_policies = len(policy_imgs)
-    num_samples = 30
+    num_samples = 100
     rand_bkgs = utils.getRandomRange(0, num_bkgs - 1, num_samples)
     rand_policies = utils.getRandomRange(0, num_policies - 1, num_samples)
 
@@ -43,8 +42,6 @@ def main():
         full_class_path = utils.joinPath(classification_dir, img_name)
         img_p.saveImg(full_img_path, dataset_img)
         img_p.saveImg(full_class_path, class_img)
-
-    # img_p.showImg(res)
 
 
 if __name__ == '__main__':
