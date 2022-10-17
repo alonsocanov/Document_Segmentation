@@ -136,6 +136,8 @@ def main():
                         help='Path to save model with .pth extension')
     parser.add_argument('--save-path', type=str, default=save_path,
                         help='Path to save model with .pth extension')
+    parser.add_argument('--batch-size', type=int, default=4,
+                        help='Batch size of training')
 
     args = parser.parse_args()
 
