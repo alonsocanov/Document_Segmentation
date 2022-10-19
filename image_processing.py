@@ -1,5 +1,6 @@
 import cv2
 import numpy as np
+import random
 
 
 def showImg(img: np.ndarray, show_time: int = 0, title: str = 'Image'):
@@ -34,7 +35,6 @@ def setToBkgDim(dim_bkg: tuple, dim_fgd: tuple):
     max_w, max_h = dim_bkg
     w, h = dim_fgd
     factor = 1
-
     if h > max_h:
         factor = ((max_h - 1) / h)
     if w * factor > max_w:
@@ -44,10 +44,19 @@ def setToBkgDim(dim_bkg: tuple, dim_fgd: tuple):
 
 def disort(dim: tuple):
     w, h = dim
-    pt_x1, pt_y1 = 0, 0
-    pt_x2, pt_y2 = int(w * .99), 0
-    pt_x3, pt_y3 = 0, int(h * .99)
-    pt_x4, pt_y4 = int(w * .99), int(h * .99)
+    max_w_noise = w * 0.1
+    max_h_noise = h * 0.1
+    rand_w, rand_h = random.random(), random.random()
+    noise_w, noise_h = rand_w * max_w_noise, rand_h * max_h_noise
+    center_x = (w - max_w_noise) / 2 + noise_w
+    center_y = (h - max_h_noise) / 2 + noise_h
+
+    w_r, h_r = dim[0] * .89 / 2, dim[1] * .89 / 2
+
+    pt_x1, pt_y1 = int(center_x - w_r), int(center_y - h_r)
+    pt_x2, pt_y2 = int(center_x + w_r), int(center_y - h_r)
+    pt_x3, pt_y3 = int(center_x - w_r), int(center_y + h_r)
+    pt_x4, pt_y4 = int(center_x + w_r), int(center_y + h_r)
     pts = [[pt_x1, pt_y1], [pt_x2, pt_y2], [pt_x3, pt_y3], [pt_x4, pt_y4]]
     return np.float32(pts)
 
@@ -57,11 +66,8 @@ def saveImg(path: str, img: np.ndarray):
 
 
 def createImg(foreground: np.ndarray, background: np.ndarray):
-    640
-    320
-
     h_back, w_back = background.shape[:2]
-    h_back, w_back = 640, 320
+    h_back, w_back = 440, 320
     background = resize(background, (w_back, h_back))
     h_fore, w_fore = foreground.shape[:2]
     w_fore, h_fore = setToBkgDim((w_back, h_back), (w_fore, h_fore))
@@ -103,5 +109,4 @@ def morphImage(img: np.ndarray, mask: np.ndarray) -> np.ndarray:
     morph = img.astype(np.float32)
     morph[:, :, 0] = cv2.multiply(morph[:, :, 0], mask)
     morph[:, :, 2] = cv2.multiply(morph[:, :, 2], mask)
-
     return morph.astype(np.uint8)
