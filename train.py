@@ -56,9 +56,11 @@ def train_model(model, criterion, dataloaders, optimizer, metrics, bpath,
 
         for phase in ['Train', 'Test']:
             if phase == 'Train':
-                model.train()  # Set model to training mode
+                # Set model to training mode
+                model.train()
             else:
-                model.eval()  # Set model to evaluate mode
+                # Set model to evaluate mode
+                model.eval()
 
             # Iterate over data.
             for sample in tqdm(iter(dataloaders[phase])):
