@@ -13,7 +13,7 @@ def main():
     img_dir = utils.joinPath(root, 'dataset/images')
     imgs = glob.glob(img_dir + '/*.jpg', recursive=True)
     img_path = imgs[9]
-    threshold = 0.6
+    threshold = 0.5
     mask = py.predict(model_path, img_path, threshold)
     img = im.readImg(img_path)
     morphed = im.morphImage(img, mask)
